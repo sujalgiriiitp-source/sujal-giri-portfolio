@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Phone, Globe, Linkedin, Send, MapPin } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
+import emailjs from '@emailjs/browser';
 
 const contactInfo = [
   {
@@ -41,18 +42,68 @@ const ContactSection = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate inputs
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+    const message = formData.message.trim();
+
+    if (!name || name.length > 100) {
+      toast({
+        title: 'Invalid name',
+        description: 'Please enter a valid name (max 100 characters).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255) {
+      toast({
+        title: 'Invalid email',
+        description: 'Please enter a valid email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!message || message.length > 1000) {
+      toast({
+        title: 'Invalid message',
+        description: 'Please enter a message (max 1000 characters).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      await emailjs.send(
+        'service_dgg9bko',
+        'template_qm8i4c9',
+        {
+          from_name: name,
+          from_email: email,
+          message: message,
+        },
+        'QDOoCCVxVQppmfFU9'
+      );
 
-    toast({
-      title: 'Message sent!',
-      description: "Thanks for reaching out. I'll get back to you soon!",
-    });
+      toast({
+        title: 'Message sent!',
+        description: "Thanks for reaching out. I'll get back to you soon!",
+      });
 
-    setFormData({ name: '', email: '', message: '' });
-    setIsSubmitting(false);
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      toast({
+        title: 'Failed to send',
+        description: 'Something went wrong. Please try again or email me directly.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
